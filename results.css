@@ -1,0 +1,63 @@
+.tooltip {
+	display:none;
+	position:absolute;
+	border:1px solid #333;
+	background-color:#161616;
+	border-radius:5px;
+	padding:10px;
+	color:#fff;
+	font-size:12px Arial;
+}
+
+.warn {
+	background-color: #FFAAAA;
+}
+
+table.stats_summary tr
+{
+	vertical-align: top;
+}
+
+table.stats
+{
+	margin-left: 1em;
+	margin-bottom: 5px;
+}
+
+table.stats td
+{
+	text-align: right;
+	padding-left: 10px;
+}
+
+table.stats .stddev
+{
+	font-style: italic;
+}
+
+tr.stats_header
+{
+	text-align: center;
+}
+
+p.alert
+{
+	color: red;
+}
+
+div.plot_label
+{
+	display: inline;
+	text-align: right;
+	float: right;
+}
+
+div.plot_title
+{
+	width: 100%;
+}
+
+div.plot_area
+{
+	width:100%;
+}

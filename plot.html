@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title> </title>
+  <link rel="stylesheet" href="bootstrap.min.css">
+  <link rel="stylesheet" href="results.css">
+  <script src="jquery-1.11.3.min.js"></script>
+  <script type="text/javascript" src="dygraph-combined-dev.js"></script>
+  <script type="text/javascript" src="dygraph-synchronizer.js"></script>
+  <script type="text/javascript" src="dygraph-shapes.js"></script>
+  <script type="text/javascript" src="cors_timeseries.js"></script>
+  <script type="text/javascript" src="cors_summary.js"></script>
+  <script type="text/javascript" src="template.js"></script>
+  <script>
+
+
+    function showProcessingLog( date )
+    {
+        var obsdate=new Date();
+        obsdate.setTime(date);
+        var year=obsdate.getUTCFullYear().toString();
+        var yy=year.substr(2);
+        obsdate.setUTCDate(1);
+        obsdate.setUTCMonth(0);
+        var doy=Math.floor((date-obsdate.getTime())/(24*60*60*1000))+1;
+        doy="00"+doy.toString();
+        doy=doy.substr(doy.length-3);
+        url='daily_processing/'+year+'/'+doy+'/R2S'+yy+doy+'0.PRC';
+        window.open(url,'_blank');
+    }
+
+    function showPlots(corsdata)
+    {
+        var plots=[];
+        corsdata.detrend(1,5);
+        corsdata.ordinates.forEach(function(ordinate)
+        {
+            var ordts=corsdata.data[ordinate];
+            var plotel=document.getElementById(ordinate+'_plot');
+            // Specific settings for column 1 (assumed observed data)
+            var series={};
+            series[ordts.columnNames[1]]=
+                       {
+                           strokeWidth: 0.0,
+                           drawPoints: true,
+                           pointSize: 2,
+                           // drawPointCallback : Dygraph.Circles.PLUS,
+                           // drawHighlightPointCallback : Dygraph.Circles.PLUS,
+                       };
+            var dg=new Dygraph(
+                plotel,
+                ordts.data,
+                {
+                    labelsUTC: true, 
+                    labelsDiv: ordinate+'_label',
+                    digitsAfterDecimal: 4,
+                    height: 200,
+                    labels: ordts.columnNames,
+                   // showRangeSelector: true,
+                   // rangeSelectorHeight: 30,
+                    series: series,
+                    pointClickCallback: function(e,point){
+                        showProcessingLog(point.xval);
+                        },
+                } 
+            );
+            ordts.onUpdate( function(){ 
+                    dg.updateOptions({ file: ordts.data });
+                    });
+
+            
+            plots.push(dg);
+        });
+        var sync=Dygraph.synchronize(plots,
+                 { zoom: true, range: false, selection: true} );
+    };
+
+
+ function fillTextFields( summary, code )
+ {
+     expandTemplate( summary.data );
+     expandTemplate( summary.stationData(code),'stn-template');
+ }
+
+ function setupPage()
+ {
+     var code=window.location.href.match(/\?code\=(\w+)/)[1];
+     var csvFile='results/'+code+'_enu_ts.csv';
+     var ready=false;
+     var summary=new CORS_summary('results/cors_summary.json',
+             function(summmary){ fillTextFields(summary,code) });
+     var corsdata=new CORS_timeseries();
+     corsdata.loadCsv(csvFile,function(corsdata){ showPlots(corsdata); ready=true; });
+     $('#remove_trend_checkbox').change(function()
+     {
+         if( ready )
+         {
+             ready=false;
+             if($(this).is(":checked")) corsdata.detrend(1,5);
+             else corsdata.retrend();
+             ready=true;
+         }
+     });
+ }
+$(document).ready(setupPage)
+
+</script>
+</head>
+<body>
+<h1>Time series plot for <span class="stn-template" id="code"></span></h1>
+<p></p>
+<p>Calculated <span class="template" id="calcdate"></span>.
+Deformation model version <span class="template" id="deformation_model_version"></span>.
+Station coordinate model <span class="stn-template" id="scm_version"></span>.
+Status 
+<span class="stn-template" id="gdb_offset.status"></span> (gdb)
+<span class="stn-template" id="scm_offset.status"></span> (scm)
+at <span class="stn-template" id="offset_test_date"></span>.
+</p>
+<p class="alert"><span class="stn-template" id="gdb_offset.status_message"></span>
+<span class="stn-template" id="scm_offset.status_message"></span></p>
+  <div id="error" class="error"></div>
+  <div class="container-fluid">
+
+      <div class='col-md-12'>
+        <div class="plot_title">
+            East component
+            <div id="east_label" class="plot_label"></div>
+         </div>
+         <div id="east_plot" class="plot_area"></div>
+      </div>
+
+      <div class='col-md-12'>
+        <div class="plot_title">
+            North component
+            <div id="north_label" class="plot_label"></div>
+         </div>
+         <div id="north_plot" class="plot_area"></div>
+      </div>
+
+      <div class='col-md-12'>
+        <div class="plot_title">
+            Up component
+            <div id="up_label" class="plot_label"></div>
+         </div>
+         <div id="up_plot" class="plot_area"></div>
+      </div>
+
+  </div>
+  <p><label>Detrended <input type="checkbox" id="remove_trend_checkbox" checked="checked"/></label> Drag across graph to zoom in. Double click graph to zoom back out</p>
+<p class="acknowledgement">Plotting thanks to the <a href="http://dygraphs.com">dygraphs</a> javascript library</p>
+</body>
+</html>

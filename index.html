@@ -1,0 +1,130 @@
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title> </title>
+  <link rel="stylesheet" href="bootstrap.min.css">
+  <link rel="stylesheet" href="results.css">
+  <script src="jquery-1.11.3.min.js"></script>
+  <script src="sprintf.js"></script>
+  <script src="template.js"></script>
+  <script src="cors_summary.js"></script>
+  <script>
+
+/*
+$(document).ready(function() {
+// Tooltip only Text
+$('.masterTooltip').hover(function(){
+        // Hover over code
+        var title = $(this).attr('title');
+        $(this).data('tipText', title).removeAttr('title');
+        $('<p class="tooltip"></p>')
+        .text(title)
+        .appendTo('body')
+        .fadeIn('slow');
+}, function() {
+        // Hover out code
+        $(this).attr('title', $(this).data('tipText'));
+        $('.tooltip').remove();
+}).mousemove(function(e) {
+        var mousex = e.pageX + 20; //Get X coordinates
+        var mousey = e.pageY + 10; //Get Y coordinates
+        $('.tooltip')
+        .css({ top: mousey, left: mousex })
+});
+});
+*/
+
+function offsetSummary(offset)
+{
+    var hmean=Math.hypot(offset.mean[0],offset.mean[1]);
+    var hmedian=Math.hypot(offset.median[0],offset.median[1]);
+    var hstd=Math.hypot(offset.std[0],offset.std[1]);
+    var result=$('<table>').addClass('stats').addClass(offset.status);
+    result.append($('<tr>')
+            .append($('<td>').text(sprintf("%7.4f",hmean)))
+            .append($('<td>').text(sprintf("%7.4f",hmedian)))
+            .append($('<td>').addClass('stddev').text(sprintf("%7.4f",offset.std[2])))
+            );
+    result.append($('<tr>')
+            .append($('<td>').text(sprintf("%7.4f",offset.mean[2])))
+            .append($('<td>').text(sprintf("%7.4f",offset.median[2])))
+            .append($('<td>').addClass('stddev').text(sprintf("%7.4f",offset.std[2])))
+            );
+    if( 'status_message' in offset )
+    {
+        result.attr('title',offset.status_message);
+    } 
+    return result;
+}
+
+function loadCORSSummary(cors_summary)
+{
+    data=cors_summary.data
+    var table=$('<table>').addClass('stats_summary');
+    table.append($('<tr>').addClass('stats_header')
+            .append($('<td>').text('Station H/V'))
+            .append($('<td>').text('GDB offset'))
+            .append($('<td>').text('SCM offset')));
+    table.append($('<tr>')
+            .append($('<td>'))
+            .append($('<td>').append( $('<table>').addClass('stats')
+                    .append( $('<tr>')
+                        .append($('<td>').text('mean'))
+                        .append($('<td>').text('median'))
+                        .append($('<td>').text('std.dev'))
+                        )))
+            .append($('<td>').append( $('<table>').addClass('stats')
+                    .append( $('<tr>')
+                        .append($('<td>').text('mean'))
+                        .append($('<td>').text('median'))
+                        .append($('<td>').text('std.dev'))
+                        )))
+            );
+    $.each(data.station_summary, function(i,item) {
+            var tr=$('<tr>');
+            var gdbsummary=offsetSummary(item.gdb_offset);
+            var scmsummary=offsetSummary(item.scm_offset);
+            tr.append( $('<td>').append(
+                    $('<a>',{
+                        "href":"plot.html?code="+item.code, 
+                        "text":item.code
+                        })));
+            tr.append( $('<td>').addClass(item.gdb_offset.status).append(gdbsummary));
+            tr.append( $('<td>').addClass(item.scm_offset.status).append(scmsummary));
+            table.append(tr);
+            });
+    $('div#positionz_status_table').html(table);
+
+    expandTemplate(data);
+}
+
+
+$(document).ready(function(){new CORS_summary('results/cors_summary.json',loadCORSSummary);});
+
+  </script>
+
+
+
+</head>
+<body>
+<h1>PositioNZ status report</h1>
+<p>The following table checks the integrity of NZGD2000.  Two items are checked:</p>
+<ul>
+    <li>How well the geodetic database coordinate matches results of daily processing</li>
+    <li>How well the station coordinate prediction models used in PositioNZ-PP match the station coordinates</li>
+</ul>
+
+<p>
+Last updated: <span class='template' id='calcdate'></span>.
+Deformation model version: <span class='template' id='deformation_model_version'></span>
+</p>
+
+<div id="positionz_status_table"></div>
+
+
+</body>
+</html>
+
+
+
