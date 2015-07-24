@@ -2,7 +2,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title> </title>
+  <title>NZGD2000 datum integrity</title>
   <link rel="stylesheet" href="bootstrap.min.css">
   <link rel="stylesheet" href="results.css">
   <script src="jquery-1.11.3.min.js"></script>
@@ -41,12 +41,12 @@ function offsetSummary(offset)
     var hmedian=Math.hypot(offset.median[0],offset.median[1]);
     var hstd=Math.hypot(offset.std[0],offset.std[1]);
     var result=$('<table>').addClass('stats').addClass(offset.status);
-    result.append($('<tr>')
+    result.append($('<tr class="horizontal_offsets">')
             .append($('<td>').text(sprintf("%7.4f",hmean)))
             .append($('<td>').text(sprintf("%7.4f",hmedian)))
             .append($('<td>').addClass('stddev').text(sprintf("%7.4f",offset.std[2])))
             );
-    result.append($('<tr>')
+    result.append($('<tr class="vertical_offsets">')
             .append($('<td>').text(sprintf("%7.4f",offset.mean[2])))
             .append($('<td>').text(sprintf("%7.4f",offset.median[2])))
             .append($('<td>').addClass('stddev').text(sprintf("%7.4f",offset.std[2])))
@@ -100,7 +100,15 @@ function loadCORSSummary(cors_summary)
 }
 
 
-$(document).ready(function(){new CORS_summary('results/cors_summary.json',loadCORSSummary);});
+$(document).ready(function(){
+    new CORS_summary('results/cors_summary.json',loadCORSSummary);
+    $('.show_offsets_checkbox').click(function()
+    {
+        var class_selector='.'+$(this).attr('id');
+        if( $(this).is(':checked')) $(class_selector).show()
+        else $(class_selector).hide();
+    });
+    });
 
   </script>
 
@@ -117,7 +125,12 @@ $(document).ready(function(){new CORS_summary('results/cors_summary.json',loadCO
 
 <p>
 Last updated: <span class='template' id='calcdate'></span>.
-Deformation model version: <span class='template' id='deformation_model_version'></span>
+Deformation model version: <span class='template' id='deformation_model_version'></span>.
+Comparison based on the <span class='template' id='number_of_days_tested'></span> days results.
+</p>
+<p>Show 
+horizontal <input type="checkbox" class="show_offsets_checkbox" id="horizontal_offsets" checked="checked">
+vertical <input type="checkbox" class="show_offsets_checkbox" id="vertical_offsets" checked="checked">
 </p>
 
 <div id="positionz_status_table"></div>
